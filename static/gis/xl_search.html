@@ -1,0 +1,391 @@
+
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,  minimum-scale=1.0, user-scalable=0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title></title>
+  <style type="text/css">
+    html, body, #map {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #viewEntire {
+      background-image:url(../gis/supermap/img/viewEntire.png);
+      position:absolute;
+      top: 30px;
+      left: 30px;
+      z-index: 2000;
+      width:32px;
+      height:32px;
+      cursor:pointer;
+    }
+    #zoomIn {
+      background-image:url(../gis/supermap/img/zoomIn.png);
+      position:absolute;
+      top: 66px;
+      left: 30px;
+      z-index: 2000;
+      width:32px;
+      height:32px;
+      cursor:pointer;
+    }
+    #zoomOut {
+      background-image:url(../gis/supermap/img/zoomOut.png);
+      position:absolute;
+      top: 102px;
+      left: 30px;
+      z-index: 2000;
+      width:32px;
+      height:32px;
+      cursor:pointer;
+    }
+    #pan {
+      background-image:url(../gis/supermap/img/pan.png);
+      position:absolute;
+      top: 138px;
+      left: 30px;
+      z-index: 2000;
+      width:32px;
+      height:32px;
+      cursor:pointer;
+    }
+    #line {
+      background-image:url(../gis/supermap/img/measuredistance.png);
+      position:absolute;
+      top: 174px;
+      left: 30px;
+      z-index: 2000;
+      width:32px;
+      height:32px;
+      cursor:pointer;
+    }
+    #polygon {
+      background-image:url(../gis/supermap/img/measurearea.png);
+      position:absolute;
+      top: 210px;
+      left: 30px;
+      z-index: 2000;
+      width:32px;
+      height:32px;
+      cursor:pointer;
+    }
+    #clean {
+      background-image:url(../gis/supermap/img/eraser.png);
+      position:absolute;
+      top: 246px;
+      left: 30px;
+      z-index: 2000;
+      width:32px;
+      height:32px;
+      cursor:pointer;
+    }
+
+    #draw {
+      background-image:url(../gis/image/polygon.png);
+      position:absolute;
+      top: 285px;
+      left: 30px;
+      z-index: 2000;
+      width:32px;
+      height:32px;
+      cursor:pointer;
+    }
+
+    #rectangle {
+      background-image:url(../gis/image/rectangle.png);
+      position:absolute;
+      top: 320px;
+      left: 30px;
+      z-index: 2000;
+      width:32px;
+      height:32px;
+      cursor:pointer;
+    }
+
+    #circle {
+      background-image:url(../gis/image/circle.png);
+      position:absolute;
+      top: 355px;
+      left: 30px;
+      z-index: 2000;
+      width:32px;
+      height:32px;
+      cursor:pointer;
+    }
+
+    #maximizeDiv{
+      height:24px;
+    }
+    #minimizeDiv{
+      width:170px;
+    }
+
+  </style>
+  <link rel="stylesheet" href="../gis/supermap/style.css" type="text/css" />
+  <script src="../gis/supermap/SuperMap.js"></script>
+  <script src="../gis/supermap/QueryResultLayer.js"></script>
+  <script src="../gis/lib/jquery.min.js"></script>
+  <script src="../config.js"></script>
+  <script src="../gis/js/xl_search.js"></script>
+  <script type="text/javascript">
+    var map, layer, options, originResult,lineLayer, polygonLayer,drawControls,prjCoordSys,scaleCenter,href,
+      url = supermapUrl+"/iserver/services/map-ugcv5-BaiDu/rest/maps/BaiDu";
+
+    var layerFields={},mapLayers;
+    var lon=0,lat=0,initZoomToScale=0;
+    var SCALE_PRECISION = 0.0000000001;
+    function init() {
+      // 修改页面标题
+      var mapName = url;
+      setPrjCoordSys();// 初始化动态投影参数
+      mapName = url.substring(url.lastIndexOf('/')+1);
+      mapName = decodeURI(mapName);
+      //document.title= mapName + "资源";
+      document.title= "综合查询gis";
+      // 在脚步端 支持地图表述带#后面的参数解析，参数结构:比例尺/x(lon)/y(lat)
+      href = window.location.href;
+      if(href.lastIndexOf('#')!=-1){
+        scaleCenter = href.substring(href.lastIndexOf('#')+1);
+        href = href.substring(0,href.lastIndexOf('#'));
+      }
+      initMap();
+      //var getMapStatusService = new SuperMap.REST.MapService(url, {projection: prjCoordSys});// 获取动态投影后的地图状态
+      //getMapStatusService.events.on({
+      //    'processCompleted' : completed
+      //});
+      //getMapStatusService.processAsync();
+    }
+    function initMap(){
+      SuperMap.ImgPath = supermapUrl+"/iserver/services/map-ugcv5-BaiDu/rest/static/javascriptForMaps/resource/img/";
+      options = {};
+      if(prjCoordSys!=null && prjCoordSys!=""){
+        options.projection = prjCoordSys;// 给客户端传递动态投影参数
+      }
+      options.transparent=true;
+      var enabled=true;
+      if(enabled){
+
+        var visibleScales = [];
+        var scaleValue=0.00000086536374846915;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.0000553832827776267;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00000005408523427932;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00022153300841825432;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00000000676065428629;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00000000338032714326;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00000043268187423457;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.0000017307274969383;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00000001352130857349;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00000692290986793649;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00002769164138881335;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00000002704261714697;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00000346145505378495;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00000010817046855864;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00011076650420912716;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00044306601683650863;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00001384582069440668;
+        visibleScales.push(scaleValue);
+        var scaleValue=0.00000021634093711729;
+        visibleScales.push(scaleValue);
+
+        map = new SuperMap.Map("map",{controls:[],scales:visibleScales  });
+      }else{
+        map = new SuperMap.Map("map",{controls:[]});
+      }
+      var navigation = new SuperMap.Control.Navigation({dragPanOptions: {enableKinetic: true}});
+      map.addControl(navigation);
+      layer = new SuperMap.Layer.TiledDynamicRESTLayer("Map", url, {}, options);
+
+      // 可视化地图查询结果，将结果在地图上叠加显示，相关功能实现的代码在  QueryResultLayer.js脚本中
+
+      //layer.tileSize = new SuperMap.Size(256,256);
+      lineLayer = new SuperMap.Layer.Vector("测距层");
+      polygonLayer = new SuperMap.Layer.Vector("测面层");
+
+      layer.events.on({"layerInitialized": addlayer})
+
+      addControls("true");
+      drawControls = {
+        line: new SuperMap.Control.DrawFeature(lineLayer,
+          SuperMap.Handler.Path),
+        polygon: new SuperMap.Control.DrawFeature(polygonLayer,
+          SuperMap.Handler.Polygon)
+      };
+      for (var key in drawControls) {
+        drawControls[key].events.on({"featureadded": drawCompleted});
+        map.addControl(drawControls[key]);
+      }
+
+
+      map.addControl(new SuperMap.Control.LayerSwitcher());
+    }
+
+    function addlayer() {
+      map.addLayers([layer, lineLayer, polygonLayer]);
+      var lonlat = layer.maxExtent.getCenterLonLat();
+      lon = lonlat.lon;
+      lat = lonlat.lat;
+      lon =116.6975;
+      lat =39.8020;
+      map.events.on({"move": moveHandler});
+      map.events.on({"moveend": moveEndHandler});
+
+      // 在脚步端 支持地图表述带#后面的参数解析，参数结构:比例尺/x(lon)/y(lat)
+      if(scaleCenter){
+        initZoomToScale = scaleCenter.substring(0,scaleCenter.indexOf('/'));
+        scaleCenter = scaleCenter.substring(scaleCenter.indexOf('/')+1);
+        lon = scaleCenter.substring(0,scaleCenter.indexOf('/'));
+        lat = scaleCenter.substring(scaleCenter.lastIndexOf('/')+1);
+      }
+
+      map.setCenter(new SuperMap.LonLat(lon, lat));
+
+      var defScale = 0.00000346145505378495;// 给客户端传递默认比例尺
+      map.zoomToScale(defScale,true);
+      if(initZoomToScale!=0){
+        map.zoomToScale(initZoomToScale,true);
+      }
+
+
+      initWFS();
+    }
+
+    function moveHandler(){
+      var scale = map.getScale();
+      scale = parseInt(1 / scale * 10) / 10;
+      var scaleText = document.getElementById("scaleText");
+      scaleText.value="比例尺： 1/" + scale;
+    }
+
+    function moveEndHandler(){// 在脚步端 响应鼠标拖动结束事件，修改地址栏的url的比例尺和中心点坐标
+      var hrefurl = href+"#";
+      curScale = map.getScale();
+      var curCenter = map.getCenter();
+      hrefurl = hrefurl + curScale +"/"+curCenter.lon+"/"+curCenter.lat;
+      window.location.replace(hrefurl);
+    }
+
+    function zoomIn() {
+      deactivateControl();
+      map.zoomIn();
+    }
+    function zoomOut() {
+      deactivateControl();
+      map.zoomOut();
+    }
+    function viewEntire() {
+      deactivateControl();
+      map.zoomToMaxExtent();
+    }
+
+    function addControls(isAddScaleLine) {
+      //var  layerSwitcher = new SuperMap.Control.LayerSwitcher();
+      var  scaleLine = new SuperMap.Control.ScaleLine();
+      var  mousePosition = new SuperMap.Control.MousePosition();
+      mousePosition.numDigits=10;// 精度保留到小数点后10位
+      if(isAddScaleLine=="true"){
+        map.addControls([scaleLine, mousePosition]);
+      }else{
+        map.addControl(mousePosition);
+      }
+    }
+    function drawCompleted(drawGeometryArgs) {
+      var geometry = drawGeometryArgs.feature.geometry;
+      var measureParam = new SuperMap.REST.MeasureParameters(geometry);
+      var surl = supermapUrl+"/iserver/services/map-ChinaProvinces/rest/maps/ChinaProvinces";
+      var myMeasuerService = new SuperMap.REST.MeasureService(encodeURI(surl));
+      myMeasuerService.events.on({"processCompleted": measureCompleted});
+      if (geometry.CLASS_NAME.indexOf("LineString") > -1) {
+        myMeasuerService.measureMode = SuperMap.REST.MeasureMode.DISTANCE;
+      } else {
+        myMeasuerService.measureMode = SuperMap.REST.MeasureMode.AREA;
+      }
+      myMeasuerService.processAsync(measureParam);
+    }
+    function measureCompleted(measureEventArgs) {
+      var distance = measureEventArgs.result.distance;
+      var area = measureEventArgs.result.area;
+      var unit = measureEventArgs.result.unit;
+      var result = document.getElementById("result");
+      result.value="量算结果：";
+      if (distance != -1) {
+        result.value+=parseFloat(distance).toFixed(2) + "米";
+        result.size=30;
+      } else if (area != -1) {
+        result.value+=parseFloat(area).toFixed(2) + "平方米";
+        result.size=38;
+      }
+    }
+
+    function setPrjCoordSys() {// 支持动态投影，解析url相应参数
+    }
+
+    function toggleControl(element) {
+      for(key in drawControls) {
+        var control = drawControls[key];
+
+        if (element.id == key) {
+          control.activate();
+        } else {
+          control.deactivate();
+        }
+      }
+    }
+    function deactivateControl() {
+      drawControls["line"].deactivate();
+      drawControls["polygon"].deactivate();
+    }
+    function removeAllFeatures() {
+      lineLayer.removeAllFeatures();
+      polygonLayer.removeAllFeatures();
+      deactivateControl();
+      document.getElementById("result").value="";
+      clearFeatures();
+    }
+
+  </script>
+</head>
+<body onload="init()">
+<div id="map" style="border: 0px;background-color:white">
+  <a id="viewEntire"  onclick= "viewEntire()" title="全幅显示"></a>
+  <a id="zoomIn"  onclick= "zoomIn()" title="放大"></a>
+  <a id="zoomOut" onclick= "zoomOut()" title="缩小"></a>
+  <a id="pan"  onclick= "deactivateControl()" title="平移"></a>
+  <a id="line"  onclick= "toggleControl(this);" title="距离量算"></a>
+  <a id="polygon"  onclick= "toggleControl(this);" title="面积量算"></a>
+  <a id="clean"  onclick= "removeAllFeatures()" title="清除"></a>
+  <a id="draw"       onclick= "polygonActive()" title="多边形查询"></a>
+  <a id="rectangle"  onclick= "rectangleActive()" title="框选"></a>
+  <a id="circle"     onclick= "circleActive()" title="圈选"></a>
+</div>
+<div id="measureResult" style="position:absolute;bottom:23px;right:10px;z-index:2000; text-align: right;">
+  <p><input id="result" type="text" value="" style="background:none;border:none;text-align: right;" readonly="true" /></p>
+</div>
+<div id="scaleResult" style="position:absolute;bottom:5px;right:10px;z-index:2000; text-align: right;">
+  <p><input id="scaleText" type="text" value="" style="background:none;border:none;text-align: right;" readonly="true" /></p>
+</div>
+<div style="position:absolute;top:23px;right:100px;z-index:2000; text-align: right;">
+  <input id="r1" onclick="clickRadio(0)" type="radio" value="0" name="dtype" checked="checked">MAC</input>
+  <input id="r2" onclick="clickRadio(1)" type="radio" value="1" name="dtype">场所</input>
+  <input id="r3" onclick="clickRadio(2)" type="radio" value="2" name="dtype">设备</input>
+  <input id="r4" onclick="clickRadio(3)" type="radio" value="3" name="dtype">重点人</input>
+</div>
+</body>
+</html>
